@@ -6,8 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
-    "build": "electron-builder",
-    "build-win": "electron-builder --win"
+    "build": "electron-builder"
   },
   "build": {
     "appId": "huangcong12@gmail.com",
