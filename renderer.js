@@ -12,6 +12,11 @@ window.onload = () => {
             const li = createTreeItem(dir.name, dir.path, true);
             dirList.appendChild(li);
         });
+
+        // 请求根目录的内容
+        if (dirs.length > 0) {
+            ipcRenderer.send('get-dir-content', dirs[0].path);
+        }
     });
 
     ipcRenderer.on('dir-content', (event, { path, folders, files }) => {
@@ -174,37 +179,44 @@ function createContentElement(name, path, type) {
 }
 
 function handleSelection(event, path) {
-    const allItems = document.querySelectorAll('.content-item');
-    const currentIndex = Array.from(allItems).indexOf(document.querySelector(`[data-path="${path}"]`));
+    requestAnimationFrame(() => {
+        const allItems = document.querySelectorAll('.content-item');
+        const currentIndex = Array.from(allItems).indexOf(document.querySelector(`[data-path="${path}"]`));
 
-    if (event.shiftKey && lastSelectedIndex >= 0) {
-        // Shift 多选
-        const start = Math.min(currentIndex, lastSelectedIndex);
-        const end = Math.max(currentIndex, lastSelectedIndex);
+        let updatedSelection = [];
 
-        selectedPaths = [];
-        for (let i = start; i <= end; i++) {
-            const itemPath = allItems[i].dataset.path;
-            selectedPaths.push(itemPath);
-        }
-    } else if (event.ctrlKey || event.metaKey) {
-        // Ctrl / Command 键多选
-        if (selectedPaths.includes(path)) {
-            selectedPaths = selectedPaths.filter(p => p !== path);
+        if (event.shiftKey && lastSelectedIndex >= 0) {
+            // Shift 多选
+            const start = Math.min(currentIndex, lastSelectedIndex);
+            const end = Math.max(currentIndex, lastSelectedIndex);
+
+            for (let i = start; i <= end; i++) {
+                const itemPath = allItems[i].dataset.path;
+                updatedSelection.push(itemPath);
+            }
+        } else if (event.ctrlKey || event.metaKey) {
+            // Ctrl / Command 键多选
+            if (selectedPaths.includes(path)) {
+                updatedSelection = selectedPaths.filter(p => p !== path);
+            } else {
+                updatedSelection = [...selectedPaths, path];
+            }
         } else {
-            selectedPaths.push(path);
+            // 普通点击，清除之前的选择，只选择当前的文件或文件夹
+            updatedSelection = [path];
         }
-    } else {
-        // 普通点击，清除之前的选择，只选择当前的文件或文件夹
-        selectedPaths = [path];
-    }
 
-    lastSelectedIndex = currentIndex;
-    updateSelectionUI();
+        if (JSON.stringify(selectedPaths) !== JSON.stringify(updatedSelection)) {
+            selectedPaths = updatedSelection;
+            updateSelectionUI();
+        }
+
+        lastSelectedIndex = currentIndex;
+    })
 }
 
 function updateSelectionUI() {
-    // 清除之前的选中效果
+    // 首先移除所有选中的效果
     document.querySelectorAll('.content-item.selected').forEach(item => {
         item.classList.remove('selected');
     });
@@ -226,7 +238,7 @@ function showContextMenu(x, y) {
     menu.style.left = `${x}px`;
 
     const copyNameOption = document.createElement('div');
-    copyNameOption.textContent = '复制名字';
+    copyNameOption.textContent = 'Copy Name';
     copyNameOption.onclick = copySelectedNames;
 
     menu.appendChild(copyNameOption);

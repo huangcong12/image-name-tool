@@ -7,14 +7,15 @@ function createWindow() {
     width: 1000,
     height: 700,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      // preload: path.join(__dirname, 'preload.js'),
+      icon: path.join(__dirname, 'assets', 'app_icon.png'), // 设置图标路径
       nodeIntegration: true,
       contextIsolation: false
     }
   });
 
   mainWindow.loadFile('index.html');
-  mainWindow.webContents.openDevTools()
+  // mainWindow.webContents.openDevTools()
 }
 
 ipcMain.on('get-root-dirs', (event) => {
