@@ -41,6 +41,22 @@
             margin-left: 20px;
             /* 控制子目录的缩进 */
         }
+
+        .content-item {
+            padding: 5px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .content-item.folder {
+            background-color: #f0f0f0;
+        }
+
+        .content-item.file {
+            background-color: #e0e0e0;
+        }
     </style>
 </head>
 
@@ -51,7 +67,7 @@
     </div>
     <div id="content">
         <h3>Directory Content</h3>
-        <ul id="file-list"></ul>
+        <div id="content-display"></div>
     </div>
     <script src="renderer.js"></script>
 </body>

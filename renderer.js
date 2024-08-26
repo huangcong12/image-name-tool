@@ -12,12 +12,24 @@ window.onload = () => {
     });
   });
 
-  ipcRenderer.on('dir-content', (event, { path, folders }) => {
+  ipcRenderer.on('dir-content', (event, { path, folders, files }) => {
     const parentItem = document.querySelector(`li[data-path="${path}"] > ul`);
     parentItem.innerHTML = '';
     folders.forEach(folder => {
       const li = createTreeItem(folder.name, folder.path, folder.isDirectory);
       parentItem.appendChild(li);
+    });
+
+    // 展示右侧文件夹内容
+    const contentDisplay = document.getElementById('content-display');
+    contentDisplay.innerHTML = '';
+    folders.forEach(folder => {
+      const folderElement = createContentElement(folder.name, folder.path, 'folder');
+      contentDisplay.appendChild(folderElement);
+    });
+    files.forEach(file => {
+      const fileElement = createContentElement(file.name, file.path, 'file');
+      contentDisplay.appendChild(fileElement);
     });
   });
 };
@@ -48,4 +60,19 @@ function createTreeItem(name, fullPath, isDirectory, level = 0) {
   }
 
   return li;
+}
+
+function createContentElement(name, path, type) {
+  const div = document.createElement('div');
+  div.className = `content-item ${type}`;
+  div.textContent = name;
+  div.dataset.path = path;
+
+  if (type === 'folder') {
+    div.onclick = () => {
+      ipcRenderer.send('get-dir-content', path);
+    };
+  }
+
+  return div;
 }

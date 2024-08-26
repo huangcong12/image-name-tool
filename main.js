@@ -38,17 +38,29 @@ ipcMain.on('get-root-dirs', (event) => {
 });
 
 ipcMain.on('get-dir-content', (event, dirPath) => {
-  const folders = fs.readdirSync(dirPath).map(file => {
-    const fullPath = path.join(dirPath, file);
-    return {
-      name: file,
-      path: fullPath,
-      isDirectory: fs.lstatSync(fullPath).isDirectory()
-    };
-  }).filter(item => item.isDirectory && !isHidden(item.name, item.path));
-
-  event.sender.send('dir-content', { path: dirPath, folders });
-});
+    const folders = [];
+    const files = [];
+  
+    fs.readdirSync(dirPath).forEach(file => {
+      const fullPath = path.join(dirPath, file);
+      if (fs.lstatSync(fullPath).isDirectory() && !isHidden(file, fullPath)) {
+        folders.push({
+          name: file,
+          path: fullPath,
+          isDirectory: true
+        });
+      } else if (!isHidden(file, fullPath)) {
+        files.push({
+          name: file,
+          path: fullPath,
+          isDirectory: false
+        });
+      }
+    });
+  
+    event.sender.send('dir-content', { path: dirPath, folders, files });
+  });
+  
 
 function isHidden(fileName, fullPath) {
   if (process.platform === 'win32') {
