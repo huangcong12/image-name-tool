@@ -14,6 +14,7 @@ function createWindow() {
   });
 
   mainWindow.loadFile('index.html');
+  mainWindow.webContents.openDevTools()
 }
 
 ipcMain.on('get-root-dirs', (event) => {
@@ -52,8 +53,6 @@ ipcMain.on('get-dir-content', (event, targetPath) => {
         console.error('Error reading directory:', error);
     }
 });
-
-  
 
 function isHidden(fileName, fullPath) {
   if (process.platform === 'win32') {

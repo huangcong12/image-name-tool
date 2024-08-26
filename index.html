@@ -42,42 +42,87 @@
             /* 控制子目录的缩进 */
         }
 
-        .content-item {
-            padding: 5px;
-            margin: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .content-item.folder {
-            background-color: #f0f0f0;
-        }
-
-        .content-item.file {
-            background-color: #e0e0e0;
-        }
-
-        .content-item {
-            display: flex;
-            align-items: center;
+        #content {
+            flex: 1;
+            overflow-y: auto;
             padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            cursor: pointer;
+            /* display: flex; */
+            flex-wrap: wrap;
+            /* 允许内容换行 */
+            justify-content: flex-start;
+            /* 内容从左到右填充 */
+            align-items: flex-start;
+            /* 内容顶部对齐 */
+        }
+
+        .content-item {
+            width: 100px;
+            /* 每个项目的宽度 */
+            margin: 10px;
+            text-align: center;
+            /* 文字居中 */
+            word-wrap: break-word;
+            overflow: hidden;
+            flex-shrink: 0;
+            /* 防止项目缩小 */
         }
 
         .content-item img {
-            margin-right: 10px;
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            /* 确保图片缩略图展示得更好 */
+        }
+
+        .content-item span {
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            /* 超出部分显示省略号 */
         }
 
         .content-item.folder {
             background-color: #f0f0f0;
+            flex-direction: row;
         }
 
         .content-item.file {
             background-color: #e0e0e0;
+            flex-direction: row;
+        }
+
+        #content-display {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .selected {
+            border: 2px solid #0078d4;
+            /* 选中时的边框颜色 */
+            background-color: #e5f3ff;
+            /* 选中时的背景色 */
+        }
+
+        .context-menu {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            padding: 5px;
+        }
+
+        .context-menu div {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .context-menu div:hover {
+            background-color: #f0f0f0;
         }
     </style>
 </head>
@@ -90,7 +135,9 @@
     <div id="content">
         <h3>Directory Content</h3>
         <div id="breadcrumb"></div> <!-- 用于展示路径导航 -->
+        <!-- <div id="content-list"> -->
         <div id="content-display"></div>
+        <!-- </div> -->
     </div>
     <script src="renderer.js"></script>
 </body>

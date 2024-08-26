@@ -1,5 +1,6 @@
 const { ipcRenderer } = require('electron');
 const pathModule = require('path');
+let selectedPaths = []; // 全局变量，用于保存选中的文件或文件夹路径
 
 window.onload = () => {
     ipcRenderer.send('get-root-dirs');
@@ -15,24 +16,35 @@ window.onload = () => {
 
     ipcRenderer.on('dir-content', (event, { path, folders, files }) => {
         updateBreadcrumb(path);
-    
+
         const contentDisplay = document.getElementById('content-display');
         contentDisplay.innerHTML = '';
-    
+
         // 展示文件夹
         folders.forEach(folder => {
             const folderElement = createContentElement(folder.name, folder.path, 'folder');
             contentDisplay.appendChild(folderElement);
         });
-    
+
         // 展示文件
         files.forEach(file => {
             const fileElement = createContentElement(file.name, file.path, 'file');
             contentDisplay.appendChild(fileElement);
         });
     });
-    
+
+    // 监听键盘按下事件，检测 Ctrl+C
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+            copySelectedNames();
+        }
+    });
 };
+
+document.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+    showContextMenu(event.clientX, event.clientY);
+});
 
 function updateBreadcrumb(path) {
     const breadcrumb = document.getElementById('breadcrumb');
@@ -71,7 +83,6 @@ function updateBreadcrumb(path) {
         }
     });
 }
-
 
 function createTreeItem(name, fullPath, isDirectory, level = 0) {
     const li = document.createElement('li');
@@ -115,22 +126,24 @@ function createTreeItem(name, fullPath, isDirectory, level = 0) {
     return li;
 }
 
+let lastSelectedIndex = -1;
+
 function createContentElement(name, path, type) {
     const div = document.createElement('div');
     div.className = `content-item ${type}`;
+    div.dataset.path = path; // 为元素添加路径数据
 
     const icon = document.createElement('img');
-    icon.style.width = '50px';
-    icon.style.height = '50px';
-    icon.style.marginRight = '10px';
+    icon.style.width = '80px';
+    icon.style.height = '80px';
+    icon.style.objectFit = 'cover';
 
     if (type === 'folder') {
-        icon.src = 'folder-icon.png'; // 文件夹图标路径
+        icon.src = 'folder-icon.png';
     } else if (isImageFile(name)) {
-        icon.src = path; // 真实图片的路径
-        icon.style.objectFit = 'cover'; // 确保图片缩略图展示得更好
+        icon.src = path;
     } else {
-        icon.src = 'file-icon.png'; // 其他文件的图标路径
+        icon.src = 'file-icon.png';
     }
 
     const text = document.createElement('span');
@@ -139,16 +152,112 @@ function createContentElement(name, path, type) {
     div.appendChild(icon);
     div.appendChild(text);
 
+    // 点击选择
+    div.onclick = (e) => {
+        handleSelection(e, path);
+    };
+
+    // 双击打开文件夹
     if (type === 'folder') {
-        div.onclick = () => {
+        div.ondblclick = () => {
             ipcRenderer.send('get-dir-content', path);
         };
     }
 
+    // 右键菜单
+    div.oncontextmenu = (e) => {
+        e.preventDefault();
+        showContextMenu(e.clientX, e.clientY);
+    };
+
     return div;
+}
+
+function handleSelection(event, path) {
+    const allItems = document.querySelectorAll('.content-item');
+    const currentIndex = Array.from(allItems).indexOf(document.querySelector(`[data-path="${path}"]`));
+
+    if (event.shiftKey && lastSelectedIndex >= 0) {
+        // Shift 多选
+        const start = Math.min(currentIndex, lastSelectedIndex);
+        const end = Math.max(currentIndex, lastSelectedIndex);
+
+        selectedPaths = [];
+        for (let i = start; i <= end; i++) {
+            const itemPath = allItems[i].dataset.path;
+            selectedPaths.push(itemPath);
+        }
+    } else if (event.ctrlKey || event.metaKey) {
+        // Ctrl / Command 键多选
+        if (selectedPaths.includes(path)) {
+            selectedPaths = selectedPaths.filter(p => p !== path);
+        } else {
+            selectedPaths.push(path);
+        }
+    } else {
+        // 普通点击，清除之前的选择，只选择当前的文件或文件夹
+        selectedPaths = [path];
+    }
+
+    lastSelectedIndex = currentIndex;
+    updateSelectionUI();
+}
+
+function updateSelectionUI() {
+    // 清除之前的选中效果
+    document.querySelectorAll('.content-item.selected').forEach(item => {
+        item.classList.remove('selected');
+    });
+
+    // 为选中的项目添加选中效果
+    selectedPaths.forEach(path => {
+        const item = document.querySelector(`[data-path="${path}"]`);
+        if (item) {
+            item.classList.add('selected');
+        }
+    });
+}
+
+// 展示右键菜单
+function showContextMenu(x, y) {
+    const menu = document.createElement('div');
+    menu.className = 'context-menu';
+    menu.style.top = `${y}px`;
+    menu.style.left = `${x}px`;
+
+    const copyNameOption = document.createElement('div');
+    copyNameOption.textContent = '复制名字';
+    copyNameOption.onclick = copySelectedNames;
+
+    menu.appendChild(copyNameOption);
+    document.body.appendChild(menu);
+
+    document.addEventListener('click', () => {
+        document.body.removeChild(menu);
+    }, { once: true });
+}
+
+function copySelectedNames() {
+    if (selectedPaths.length === 0) return;
+
+    // 获取选中项的名字
+    const namesToCopy = selectedPaths.map(path => {
+        const parts = path.split(pathModule.sep);
+        return parts[parts.length - 1];
+    }).join('\n');
+
+    // 将名字复制到剪切板
+    navigator.clipboard.writeText(namesToCopy).then(() => {
+        console.log('名字已复制到剪切板');
+    }).catch(err => {
+        console.error('复制失败', err);
+    });
 }
 
 function isImageFile(fileName) {
     return /\.(jpg|jpeg|png|gif|bmp|webp|tiff)$/.test(fileName.toLowerCase());
 }
 
+function isImageFile(fileName) {
+    return /\.(jpg|jpeg|png|gif|bmp|webp|tiff)$/.test(fileName.toLowerCase());
+}
