@@ -37,29 +37,22 @@ ipcMain.on('get-root-dirs', (event) => {
   event.sender.send('root-dirs', rootDirs);
 });
 
-ipcMain.on('get-dir-content', (event, dirPath) => {
-    const folders = [];
-    const files = [];
-  
-    fs.readdirSync(dirPath).forEach(file => {
-      const fullPath = path.join(dirPath, file);
-      if (fs.lstatSync(fullPath).isDirectory() && !isHidden(file, fullPath)) {
-        folders.push({
-          name: file,
-          path: fullPath,
-          isDirectory: true
+ipcMain.on('get-dir-content', (event, targetPath) => {
+    try {
+        const files = fs.readdirSync(targetPath);
+        const folders = files.filter(file => fs.statSync(path.join(targetPath, file)).isDirectory() &&!isHidden(file, path.join(targetPath, file)));
+        const filePaths = files.filter(file => !fs.statSync(path.join(targetPath, file)).isDirectory());
+
+        event.sender.send('dir-content', {
+            path: targetPath,
+            folders: folders.map(folder => ({ name: folder, path: path.join(targetPath, folder) })),
+            files: filePaths.map(file => ({ name: file, path: path.join(targetPath, file) }))
         });
-      } else if (!isHidden(file, fullPath)) {
-        files.push({
-          name: file,
-          path: fullPath,
-          isDirectory: false
-        });
-      }
-    });
-  
-    event.sender.send('dir-content', { path: dirPath, folders, files });
-  });
+    } catch (error) {
+        console.error('Error reading directory:', error);
+    }
+});
+
   
 
 function isHidden(fileName, fullPath) {
