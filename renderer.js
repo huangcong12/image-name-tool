@@ -63,16 +63,39 @@ function createTreeItem(name, fullPath, isDirectory, level = 0) {
 }
 
 function createContentElement(name, path, type) {
-  const div = document.createElement('div');
-  div.className = `content-item ${type}`;
-  div.textContent = name;
-  div.dataset.path = path;
-
-  if (type === 'folder') {
-    div.onclick = () => {
-      ipcRenderer.send('get-dir-content', path);
-    };
-  }
-
-  return div;
+    const div = document.createElement('div');
+    div.className = `content-item ${type}`;
+    
+    const icon = document.createElement('img');
+    icon.style.width = '50px';
+    icon.style.height = '50px';
+    icon.style.marginRight = '10px';
+    
+    if (type === 'folder') {
+        icon.src = 'folder-icon.png'; // 文件夹图标路径
+    } else if (isImageFile(name)) {
+        icon.src = path; // 真实图片的路径
+        icon.style.objectFit = 'cover'; // 确保图片缩略图展示得更好
+    } else {
+        icon.src = 'file-icon.png'; // 其他文件的图标路径
+    }
+    
+    const text = document.createElement('span');
+    text.textContent = name;
+    
+    div.appendChild(icon);
+    div.appendChild(text);
+    
+    if (type === 'folder') {
+        div.onclick = () => {
+            ipcRenderer.send('get-dir-content', path);
+        };
+    }
+    
+    return div;
 }
+
+function isImageFile(fileName) {
+    return /\.(jpg|jpeg|png|gif|bmp|webp|tiff)$/.test(fileName.toLowerCase());
+}
+
