@@ -1,5 +1,6 @@
 node_modules
 
+dist
 /.cache
 /build
 /app/build
@@ -15,3 +16,6 @@ database.sqlite
 yarn.lock
 .idea
 .vscode
+
+electron-v32.0.1-linux-x64
+electron-v32.0.1-linux-x64.zip

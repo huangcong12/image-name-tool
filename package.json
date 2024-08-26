@@ -1,28 +1,62 @@
 {
-  "name": "imagenametool",
+  "name": "image-name-tool",
   "version": "1.0.0",
-  "description": "",
+  "description": "Tools for extracting image names",
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder",
+    "build-win": "electron-builder --win"
   },
   "build": {
-    "appId": "com.yourname.yourapp",
+    "appId": "huangcong12@gmail.com",
     "icon": "assets/app_icon.png",
     "files": [
-      "build/**/*",
-      "node_modules/**/*",
-      "main.js"
+      "**/*"
     ],
     "directories": {
-      "buildResources": "assets"
-    }
+      "buildResources": "assets",
+      "output": "dist"
+    },
+    "mac": {
+      "target": [
+        "dir"
+      ],
+      "icon": "assets/app_icon.icns",
+      "artifactName": "${productName}-macos.${ext}"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "ia32"
+          ]
+        }
+      ],
+      "icon": "assets/app_icon.ico",
+      "artifactName": "${productName}-windows.${ext}"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "assets/app_icon.png",
+      "artifactName": "${productName}-linux.${ext}"
+    },
+    "electronDist": "./electron-v32.0.1-linux-x64"
   },
   "keywords": [],
-  "author": "",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^32.0.1"
-  }
+    "electron": "^32.0.1",
+    "electron-builder": "^24.13.3",
+    "rimraf": "^6.0.1"
+  },
+  "author": {
+    "name": "huangcong12",
+    "email": "huangcong12@gmail.com"
+  },
+  "homepage": "https://apps.shopify.com/bulk-image-butler"
 }
