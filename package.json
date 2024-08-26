@@ -43,8 +43,7 @@
       ],
       "icon": "assets/app_icon.png",
       "artifactName": "${productName}-linux.${ext}"
-    },
-    "electronDist": "./electron-v32.0.1-linux-x64"
+    }
   },
   "keywords": [],
   "license": "ISC",
