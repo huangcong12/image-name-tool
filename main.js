@@ -1,6 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const fs = require('fs');
+const fs = require('fs-extra');
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -18,7 +18,7 @@ function createWindow() {
   // mainWindow.webContents.openDevTools()
 }
 
-ipcMain.on('get-root-dirs', (event) => {
+ipcMain.on('get-root-dirs', async (event) => {
   const rootDirs = [];
   const rootPaths = ['/'];
 
@@ -26,33 +26,47 @@ ipcMain.on('get-root-dirs', (event) => {
     rootPaths.push(...getWindowsDrives());
   }
 
-  rootPaths.forEach(rootPath => {
-    const files = fs.readdirSync(rootPath);
-    files.forEach(file => {
-      const fullPath = path.join(rootPath, file);
-      if (fs.lstatSync(fullPath).isDirectory() && !isHidden(file, fullPath)) {
-        rootDirs.push({ name: file, path: fullPath });
+  for (const rootPath of rootPaths) {
+    try {
+      const files = await fs.readdir(rootPath);
+      for (const file of files) {
+        const fullPath = path.join(rootPath, file);
+        if ((await fs.lstat(fullPath)).isDirectory() && !isHidden(file, fullPath)) {
+          rootDirs.push({ name: file, path: fullPath });
+        }
       }
-    });
-  });
+    } catch (error) {
+      console.error(`Error reading root directory ${rootPath}:`, error);
+    }
+  }
 
   event.sender.send('root-dirs', rootDirs);
 });
 
-ipcMain.on('get-dir-content', (event, targetPath) => {
-    try {
-        const files = fs.readdirSync(targetPath);
-        const folders = files.filter(file => fs.statSync(path.join(targetPath, file)).isDirectory() &&!isHidden(file, path.join(targetPath, file)));
-        const filePaths = files.filter(file => !fs.statSync(path.join(targetPath, file)).isDirectory());
+ipcMain.on('get-dir-content', async (event, targetPath) => {
+  try {
+    const files = await fs.readdir(targetPath);
+    const folders = [];
+    const filePaths = [];
 
-        event.sender.send('dir-content', {
-            path: targetPath,
-            folders: folders.map(folder => ({ name: folder, path: path.join(targetPath, folder) })),
-            files: filePaths.map(file => ({ name: file, path: path.join(targetPath, file) }))
-        });
-    } catch (error) {
-        console.error('Error reading directory:', error);
+    for (const file of files) {
+      const fullPath = path.join(targetPath, file);
+      const stat = await fs.stat(fullPath);
+      if (stat.isDirectory() && !isHidden(file, fullPath)) {
+        folders.push({ name: file, path: fullPath });
+      } else if (!stat.isDirectory()) {
+        filePaths.push({ name: file, path: fullPath });
+      }
     }
+
+    event.sender.send('dir-content', {
+      path: targetPath,
+      folders: folders,
+      files: filePaths
+    });
+  } catch (error) {
+    console.error('Error reading directory:', error);
+  }
 });
 
 function isHidden(fileName, fullPath) {

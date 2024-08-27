@@ -1,18 +1,9 @@
 const { ipcRenderer } = require('electron');
 const pathModule = require('path');
-const os = require('os');
-
 let selectedPaths = []; // 全局变量，用于保存选中的文件或文件夹路径
 
 window.onload = () => {
-    const platform = os.platform();
-    
-    if (platform === 'win32') {
-        // 仅在 Windows 上展示盘符
-        ipcRenderer.send('get-root-dirs', { onlyDrives: true });
-    } else {
-        ipcRenderer.send('get-root-dirs');
-    }
+    ipcRenderer.send('get-root-dirs');
 
     ipcRenderer.on('root-dirs', (event, dirs) => {
         const dirList = document.getElementById('dir-list');
@@ -221,7 +212,7 @@ function handleSelection(event, path) {
         }
 
         lastSelectedIndex = currentIndex;
-    });
+    })
 }
 
 function updateSelectionUI() {
@@ -273,6 +264,10 @@ function copySelectedNames() {
     }).catch(err => {
         console.error('复制失败', err);
     });
+}
+
+function isImageFile(fileName) {
+    return /\.(jpg|jpeg|png|gif|bmp|webp|tiff)$/.test(fileName.toLowerCase());
 }
 
 function isImageFile(fileName) {

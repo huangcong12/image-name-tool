@@ -62,5 +62,8 @@
     "name": "huangcong12",
     "email": "huangcong12@gmail.com"
   },
-  "homepage": "https://apps.shopify.com/bulk-image-butler"
+  "homepage": "https://apps.shopify.com/bulk-image-butler",
+  "dependencies": {
+    "fs-extra": "^11.2.0"
+  }
 }
