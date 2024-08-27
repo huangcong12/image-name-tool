@@ -157,7 +157,7 @@ function createContentElement(name, path, type) {
 function handleSelection(event, path) {
     requestAnimationFrame(() => {
         const allItems = document.querySelectorAll('.content-item');
-        const currentIndex = Array.from(allItems).indexOf(document.querySelector(`[data-path="${path}"]`));
+        const currentIndex = Array.from(allItems).indexOf(document.querySelector(`[data-path="${replaceSpacesWithUnderscore(path)}"]`));
 
         let updatedSelection = [];
 
@@ -193,9 +193,13 @@ function updateSelectionUI() {
     });
 
     selectedPaths.forEach(path => {
-        const item = document.querySelector(`[data-path="${path}"]`);
+        const item = document.querySelector(`[data-path="${replaceSpacesWithUnderscore(path)}"]`);
         if (item) item.classList.add('selected');
     });
+}
+
+function replaceSpacesWithUnderscore(str) {
+    return str.replace(/\\/g, '\\\\');
 }
 
 function showContextMenu(x, y) {
