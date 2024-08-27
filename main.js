@@ -18,29 +18,29 @@ function createWindow() {
   // mainWindow.webContents.openDevTools()
 }
 
-ipcMain.on('get-root-dirs', async (event) => {
-  const rootDirs = [];
-  const rootPaths = ['/'];
-
+ipcMain.on('get-root-dirs', (event) => {
   if (process.platform === 'win32') {
-    rootPaths.push(...getWindowsDrives());
+      exec('wmic logicaldisk get name', (error, stdout) => {
+          if (error) {
+              console.error(`exec error: ${error}`);
+              return;
+          }
+          const drives = stdout.split('\r\n')
+              .filter(line => line.trim() && line.includes(':'))
+              .map(line => ({
+                  name: line.trim(),
+                  path: line.trim() + '\\'
+              }));
+          event.reply('root-dirs', drives);
+      });
+  } else {
+      // 其他平台的处理逻辑
+      event.reply('root-dirs', [
+          { name: '/', path: '/' },
+          { name: '/home', path: '/home' },
+          // 添加其他需要列出的根目录
+      ]);
   }
-
-  for (const rootPath of rootPaths) {
-    try {
-      const files = await fs.readdir(rootPath);
-      for (const file of files) {
-        const fullPath = path.join(rootPath, file);
-        if ((await fs.lstat(fullPath)).isDirectory() && !isHidden(file, fullPath)) {
-          rootDirs.push({ name: file, path: fullPath });
-        }
-      }
-    } catch (error) {
-      console.error(`Error reading root directory ${rootPath}:`, error);
-    }
-  }
-
-  event.sender.send('root-dirs', rootDirs);
 });
 
 ipcMain.on('get-dir-content', async (event, targetPath) => {
