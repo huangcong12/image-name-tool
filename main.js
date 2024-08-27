@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs-extra');
-const { exec } = require('child_process'); // 导入 exec
+const os = require('os');
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -21,19 +21,17 @@ function createWindow() {
 
 ipcMain.on('get-root-dirs', (event) => {
   if (process.platform === 'win32') {
-      exec('wmic logicaldisk get name', (error, stdout) => {
-          if (error) {
-              console.error(`exec error: ${error}`);
-              return;
-          }
-          const drives = stdout.split('\r\n')
-              .filter(line => line.trim() && line.includes(':'))
-              .map(line => ({
-                  name: line.trim(),
-                  path: line.trim() + '\\'
-              }));
-          event.reply('root-dirs', drives);
-      });
+    const username = os.userInfo().username; // 动态获取当前用户名
+    const userPath = path.join('C:/Users', username, "Desktop"); // 构建用户目录路径
+
+    // 获取除 C 盘外的所有可用磁盘
+    // const otherDrives = getWindowsDrives();
+
+    const dirs = [
+        { name: username + "'s Desktop", path: userPath },
+        // ...otherDrives  // 其他驱动器
+    ];
+    event.reply('root-dirs', dirs);
   } else {
       // 其他平台的处理逻辑
       event.reply('root-dirs', [
@@ -79,13 +77,15 @@ function isHidden(fileName, fullPath) {
   }
 }
 
-function getWindowsDrives() {
+function getWindowsDrives(exclude = ['A', 'B', 'C']) {
   const drives = [];
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   letters.forEach(letter => {
-    const drivePath = `${letter}:\\`;
-    if (fs.existsSync(drivePath)) {
-      drives.push(drivePath);
+    if (!exclude.includes(letter)) {
+      const drivePath = `${letter}:\\`;
+      if (fs.existsSync(drivePath)) {
+        drives.push({ name: `${letter} Drive`, path: drivePath });
+      }
     }
   });
   return drives;
