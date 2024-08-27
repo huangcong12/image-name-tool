@@ -28,8 +28,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build the Electron app
-        run: npm run build
+      # - name: Build the Electron app
+      #   run: npm run build
 
       - name: Package the Electron app
         run: npm run dist
