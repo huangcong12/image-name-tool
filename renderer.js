@@ -16,23 +16,36 @@ window.onload = () => {
 
     ipcRenderer.on('dir-content', (event, { path, folders, files }) => {
         updateBreadcrumb(path);
-
+    
         const contentDisplay = document.getElementById('content-display');
-        contentDisplay.innerHTML = '';
-
-        // 展示文件夹
-        folders.forEach(folder => {
-            const folderElement = createContentElement(folder.name, folder.path, 'folder');
-            contentDisplay.appendChild(folderElement);
-        });
-
-        // 只展示图片文件
-        files.forEach(file => {
-            if (isImageFile(file.name)) {
-                const fileElement = createContentElement(file.name, file.path, 'file');
-                contentDisplay.appendChild(fileElement);
+        
+        // 添加加载效果
+        contentDisplay.innerHTML = '<div id="loading">Loading...</div>';
+    
+        // 使用 setTimeout 来允许加载效果显示
+        setTimeout(() => {
+            contentDisplay.innerHTML = '';
+    
+            // 展示文件夹
+            folders.forEach(folder => {
+                const folderElement = createContentElement(folder.name, folder.path, 'folder');
+                contentDisplay.appendChild(folderElement);
+            });
+    
+            // 只展示图片文件
+            files.forEach(file => {
+                if (isImageFile(file.name)) {
+                    const fileElement = createContentElement(file.name, file.path, 'file');
+                    contentDisplay.appendChild(fileElement);
+                }
+            });
+    
+            // 移除加载效果
+            const loadingElement = document.getElementById('loading');
+            if (loadingElement) {
+                loadingElement.remove();
             }
-        });
+        }, 0);
     });
 
     document.addEventListener('keydown', (e) => {
@@ -42,6 +55,7 @@ window.onload = () => {
     });
 };
 
+// 更新面包屑
 function updateBreadcrumb(path) {
     const breadcrumb = document.getElementById('breadcrumb');
     breadcrumb.innerHTML = ''; // 清空之前的路径
@@ -116,6 +130,7 @@ function createTreeItem(name, fullPath, isDirectory, level = 0) {
     return li;
 }
 
+// 创建内容元素
 function createContentElement(name, path, type) {
     const div = document.createElement('div');
     div.className = `content-item ${type}`;
@@ -154,6 +169,7 @@ function createContentElement(name, path, type) {
     return div;
 }
 
+// 处理选中
 function handleSelection(event, path) {
     requestAnimationFrame(() => {
         const allItems = document.querySelectorAll('.content-item');
@@ -187,14 +203,25 @@ function handleSelection(event, path) {
     });
 }
 
+// 更新选中状态
 function updateSelectionUI() {
-    document.querySelectorAll('.content-item.selected').forEach(item => {
-        item.classList.remove('selected');
+    const currentlySelected = new Set(Array.from(document.querySelectorAll('.content-item.selected')).map(item => item.dataset.path));
+    const shouldBeSelected = new Set(selectedPaths);
+
+    // Remove 'selected' class from items that should no longer be selected
+    currentlySelected.forEach(path => {
+        if (!shouldBeSelected.has(path)) {
+            const item = document.querySelector(`[data-path="${replaceSpacesWithUnderscore(path)}"]`);
+            if (item) item.classList.remove('selected');
+        }
     });
 
-    selectedPaths.forEach(path => {
-        const item = document.querySelector(`[data-path="${replaceSpacesWithUnderscore(path)}"]`);
-        if (item) item.classList.add('selected');
+    // Add 'selected' class to newly selected items
+    shouldBeSelected.forEach(path => {
+        if (!currentlySelected.has(path)) {
+            const item = document.querySelector(`[data-path="${replaceSpacesWithUnderscore(path)}"]`);
+            if (item) item.classList.add('selected');
+        }
     });
 }
 
