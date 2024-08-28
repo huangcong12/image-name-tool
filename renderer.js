@@ -89,22 +89,50 @@ function updateBreadcrumb(path) {
     });
 }
 
+// 创建树形目录
 function createTreeItem(name, fullPath, isDirectory, level = 0) {
     const li = document.createElement('li');
-    li.textContent = name;
     li.dataset.path = fullPath;
-    li.style.paddingLeft = `${level * 5}px`;
+    li.style.cursor = 'pointer';
+    li.classList.add('tree-item');
+
+    const content = document.createElement('div');
+    content.style.display = 'flex';
+    content.style.alignItems = 'center';
+
+    const indent = document.createElement('span');
+    indent.style.width = `${level * 10}px`;
+    content.appendChild(indent);
+
+    const expandIcon = document.createElement('span');
+    expandIcon.textContent = isDirectory ? '▶' : '';
+    expandIcon.style.marginRight = '3px';
+    expandIcon.style.width = '10px';
+    expandIcon.classList.add('expand-icon');
+    content.appendChild(expandIcon);
+
+    const text = document.createElement('span');
+    text.style.marginLeft = '5px';
+    text.textContent = name;
+    content.appendChild(text);
+
+    li.appendChild(content);
 
     if (isDirectory) {
         const ul = document.createElement('ul');
         ul.style.display = 'none';
         li.appendChild(ul);
-        li.style.cursor = 'pointer';
 
-        li.onclick = (e) => {
+        content.onclick = (e) => {
             e.stopPropagation();
+            clearSelection();
+            li.classList.add('selected');
+
+            // 更新所有兄弟元素的图标
+            updateSiblingIcons(li);
 
             if (ul.style.display === 'none') {
+                expandIcon.textContent = '▼';
                 if (ul.childElementCount === 0) {
                     ipcRenderer.send('get-dir-content', fullPath);
                     ipcRenderer.once('dir-content', (event, { folders }) => {
@@ -116,18 +144,49 @@ function createTreeItem(name, fullPath, isDirectory, level = 0) {
                 }
                 ul.style.display = 'block';
             } else {
+                expandIcon.textContent = '▶';
                 ul.style.display = 'none';
             }
         };
 
-        li.ondblclick = (e) => {
+        content.ondblclick = (e) => {
             e.stopPropagation();
             ul.innerHTML = ''; // Clear previous content
             ipcRenderer.send('get-dir-content', fullPath);
         };
+    } else {
+        content.onclick = (e) => {
+            e.stopPropagation();
+            clearSelection();
+            li.classList.add('selected');
+        };
     }
 
     return li;
+}
+
+// 更新所有兄弟元素的图标
+function updateSiblingIcons(currentLi) {
+    const parent = currentLi.parentElement;
+    const siblings = Array.from(parent.children);
+    siblings.forEach(sibling => {
+        if (sibling !== currentLi) {
+            const siblingIcon = sibling.querySelector('.expand-icon');
+            if (siblingIcon) {
+                siblingIcon.textContent = '▶';
+                const siblingUl = sibling.querySelector('ul');
+                if (siblingUl) {
+                    siblingUl.style.display = 'none';
+                }
+            }
+        }
+    });
+}
+
+// 清除所有选中状态
+function clearSelection() {
+    const selectedItems = document.querySelectorAll('.tree-item.selected');
+    selectedItems.forEach(item => item.classList.remove('selected'));
 }
 
 // 创建内容元素

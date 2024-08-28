@@ -97,7 +97,8 @@
 
         #content-display {
             display: flex;
-            user-select: none; /* 禁止默认的文字选中行为 */
+            user-select: none;
+            /* 禁止默认的文字选中行为 */
             flex-wrap: wrap;
         }
 
@@ -140,6 +141,18 @@
             transform: translate(-50%, -50%);
             font-size: 18px;
             color: #333;
+        }
+
+        .tree-item {
+            list-style-type: none;
+        }
+
+        .tree-item.selected>div {
+            background-color: #e0e0e0;
+        }
+
+        .tree-item ul {
+            padding-left: 0;
         }
     </style>
 </head>
