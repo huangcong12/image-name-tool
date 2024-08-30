@@ -58,10 +58,11 @@ window.onload = () => {
     
             // 只展示图片文件
             files.forEach(file => {
-                if (isImageFile(file.name)) {
-                    const fileElement = createContentElement(file.name, file.path, 'file');
-                    contentDisplay.appendChild(fileElement);
-                }
+                // 调整成不仅仅展示图片，因为 windows 平台需要看到桌面的快捷方式
+                // if (isImageFile(file.name)) {
+                const fileElement = createContentElement(file.name, file.path, 'file');
+                contentDisplay.appendChild(fileElement);
+                // }
             });
     
             // 移除加载效果
