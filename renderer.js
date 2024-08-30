@@ -1,6 +1,8 @@
 const { ipcRenderer } = require('electron');
 const pathModule = require('path');
 let selectedPaths = []; // 全局变量，用于保存选中的文件或文件夹路径
+let sortBy = 'modifiedTime'; // 'modifiedTime' or 'name'
+let sortOrder = 'desc'; // 'desc' or 'asc'
 
 window.onload = () => {
     ipcRenderer.send('get-root-dirs');
@@ -25,6 +27,28 @@ window.onload = () => {
         // 使用 setTimeout 来允许加载效果显示
         setTimeout(() => {
             contentDisplay.innerHTML = '';
+    
+            // 排序函数
+            const sortFunction = (a, b) => {
+                let aValue, bValue;
+                if (sortBy === 'modifiedTime') {
+                    aValue = a.mtime;
+                    bValue = b.mtime;
+                } else {
+                    aValue = a.name.toLowerCase();
+                    bValue = b.name.toLowerCase();
+                }
+    
+                if (sortOrder === 'asc') {
+                    return aValue > bValue ? 1 : -1;
+                } else {
+                    return aValue < bValue ? 1 : -1;
+                }
+            };
+    
+            // 排序文件夹和文件
+            folders.sort(sortFunction);
+            files.sort(sortFunction);
     
             // 展示文件夹
             folders.forEach(folder => {
@@ -295,9 +319,8 @@ function showContextMenu(x, y) {
     menu.style.left = `${x}px`;
 
     const copyNameOption = document.createElement('div');
-    copyNameOption.textContent = 'Copy Name';
+    copyNameOption.textContent = 'Copy Name(Ctrl + C)';
     copyNameOption.onclick = copySelectedNames;
-
     menu.appendChild(copyNameOption);
     document.body.appendChild(menu);
 
